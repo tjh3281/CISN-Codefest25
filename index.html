@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xenber | Enterprise AI Ops</title>
     
-    <!-- 1. Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,15 +12,16 @@
     <style>
         body { background-color: #f3f4f6; }
         .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); }
-        .nav-item { cursor: pointer; transition: all 0.2s; }
-        .nav-item:hover { background-color: #1e293b; color: white; transform: translateX(5px); }
-        .nav-active { background-color: #2563eb; color: white; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
-        /* New Block Styles */
+        /* Navigation & Animations */
+        .nav-item:hover { background-color: #1e293b; color: white; cursor: pointer; transition: 0.2s; transform: translateX(5px); }
+        .nav-active { background-color: #2563eb; color: white; }
+        
+        #chat-window { transition: all 0.3s ease-in-out; transform-origin: bottom right; }
+        .chat-hidden { transform: scale(0); opacity: 0; pointer-events: none; }
+        .chat-visible { transform: scale(1); opacity: 1; pointer-events: auto; }
+
+        /* Data Block Styles */
         .data-block { padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; transition: transform 0.2s; }
         .data-block:hover { transform: translateY(-2px); border-color: #cbd5e1; shadow: md; }
         .data-label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 4px; }
@@ -33,20 +33,25 @@
     <!-- SIDEBAR -->
     <aside class="w-64 bg-slate-900 text-slate-400 flex flex-col z-20 shadow-2xl">
         <div class="h-16 flex items-center px-6 text-white font-bold text-xl border-b border-slate-800 tracking-wide">
-            <i class="fa-solid fa-robot mr-2 text-blue-500"></i> XENBER
+            <i class="fa-solid fa-robot mr-2 text-blue-500"></i> XENBER AI
         </div>
 
         <nav class="flex-1 p-4 space-y-2">
             <div class="text-xs uppercase font-bold mb-2 text-slate-600">Main Menu</div>
+            
             <div onclick="switchView('dashboard')" id="btn-dashboard" class="nav-item nav-active p-3 rounded-lg flex items-center gap-3">
                 <i class="fa-solid fa-gauge w-5 text-center"></i> Dashboard
             </div>
+            
+            <!-- NEW FORECAST BUTTON -->
             <div onclick="switchView('forecast')" id="btn-forecast" class="nav-item p-3 rounded-lg flex items-center gap-3">
                 <i class="fa-solid fa-chart-line w-5 text-center text-purple-400"></i> KPI Forecast
             </div>
+
             <div onclick="switchView('workforce')" id="btn-workforce" class="nav-item p-3 rounded-lg flex items-center gap-3">
                 <i class="fa-solid fa-users w-5 text-center"></i> Workforce
             </div>
+            
             <div onclick="switchView('maintenance')" id="btn-maintenance" class="nav-item p-3 rounded-lg flex items-center gap-3">
                 <i class="fa-solid fa-wrench w-5 text-center"></i> Maintenance
             </div>
@@ -65,10 +70,13 @@
 
     <!-- MAIN CONTENT -->
     <div class="flex-1 flex flex-col h-screen relative">
+        
         <header class="h-16 bg-white border-b flex justify-between items-center px-8 shadow-sm z-10">
-            <h2 id="header-title" class="text-xl font-bold text-slate-800">Operational Dashboard</h2>
+            <div class="flex items-center gap-4">
+                <h2 id="header-title" class="text-xl font-bold text-slate-800">Operational Dashboard</h2>
+            </div>
             <button onclick="resetSimulation()" class="text-sm font-medium text-slate-500 hover:text-blue-600 transition flex items-center gap-2">
-                <i class="fa-solid fa-rotate-right"></i> Reset Logic
+                <i class="fa-solid fa-rotate-right"></i> Reset System
             </button>
         </header>
 
@@ -77,45 +85,37 @@
             <!-- VIEW 1: DASHBOARD -->
             <div id="view-dashboard" class="space-y-6 fade-in">
                 
-                <!-- NEW SECTION: CSV DATA BLOCKS -->
+                <!-- SECTION: CSV DATA BLOCKS (NEW) -->
                 <div class="mb-6">
                     <h3 class="text-sm font-bold text-slate-500 uppercase mb-3 flex items-center gap-2">
                         <i class="fa-solid fa-database"></i> Latest Daily Snapshot (CSV Data)
                     </h3>
-                    
-                    <!-- UPDATED GRID: Fewer items, so used 3 columns -->
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        
                         <!-- Block 1: Date -->
                         <div class="data-block border-l-4 border-slate-400">
                             <div class="data-label">Date Logged</div>
                             <div class="data-value text-sm" id="blk-date">--</div>
                         </div>
-
                         <!-- Block 2: Revenue -->
                         <div class="data-block border-l-4 border-green-500">
                             <div class="data-label">Daily Revenue</div>
                             <div class="data-value text-green-700" id="blk-revenue">--</div>
                         </div>
-
                         <!-- Block 3: Leads -->
                         <div class="data-block border-l-4 border-orange-400">
                             <div class="data-label">New Leads</div>
                             <div class="data-value" id="blk-leads">--</div>
                         </div>
-
                         <!-- Block 4: Active Users -->
                         <div class="data-block border-l-4 border-blue-400">
                             <div class="data-label">Active Users</div>
                             <div class="data-value" id="blk-users">--</div>
                         </div>
-                        
                          <!-- Block 5: Errors -->
                          <div class="data-block border-l-4 border-red-500">
                             <div class="data-label">System Error Rate</div>
                             <div class="data-value text-red-600" id="blk-errors">--</div>
                         </div>
-
                         <!-- Block 6: Risk Flag (Detailed) -->
                         <div class="data-block border-l-4 border-gray-800" id="blk-risk-card">
                             <div class="flex justify-between items-start">
@@ -125,32 +125,50 @@
                                 </div>
                                 <i id="blk-risk-icon" class="fa-solid fa-circle-exclamation text-slate-300"></i>
                             </div>
-                            <!-- New Details Section -->
                             <div id="blk-risk-details" class="mt-2 text-xs font-semibold text-slate-500 bg-slate-50 p-2 rounded border border-slate-100">
                                 Analyzing...
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- END NEW SECTION -->
 
-                <!-- Original Real-Time Charts & Tables -->
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card border-l-4 border-blue-500">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Current Load</div>
+                        <div class="text-3xl font-black text-slate-800 mt-1" id="kpi-load">0%</div>
+                    </div>
+                    <div class="card border-l-4 border-green-500">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Projected Savings</div>
+                        <div class="text-3xl font-black text-green-600 mt-1" id="kpi-savings">$0</div>
+                    </div>
+                    <div class="card border-l-4 border-amber-500">
+                        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Risks</div>
+                        <div class="text-3xl font-black text-amber-600 mt-1" id="kpi-alerts">0</div>
+                    </div>
+                </div>
+
+                <!-- Main Realtime Chart -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="col-span-2 card">
                         <h3 class="font-bold mb-4 text-slate-700 flex items-center gap-2">
-                            <i class="fa-solid fa-bolt text-blue-500"></i> Real-Time Operations Demand
+                            <i class="fa-solid fa-bolt text-blue-500"></i> AI Demand Forecast (Live Stream)
                         </h3>
                         <div class="h-64"><canvas id="mainChart"></canvas></div>
                     </div>
                     
+                    <!-- Advisor Panel -->
                     <div class="bg-slate-900 text-white rounded-xl p-6 shadow-xl flex flex-col border border-slate-700">
                         <h3 class="font-bold border-b border-slate-700 pb-3 mb-3 flex items-center gap-2 text-lg">
                             <i class="fa-solid fa-brain text-purple-400"></i> AI Strategic Advisor
                         </h3>
-                        <div id="advisor-feed" class="space-y-4 overflow-y-auto flex-1 text-sm"></div>
+                        <div id="advisor-feed" class="space-y-4 overflow-y-auto flex-1 text-sm">
+                            <div class="text-slate-400 italic">Initializing AI models...</div>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Tables -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="card h-80 flex flex-col">
                         <h3 class="font-bold mb-3 text-slate-700">⚠️ Workforce Attention Needed</h3>
@@ -167,18 +185,30 @@
                 </div>
             </div>
 
-            <!-- VIEW 2: FORECAST -->
+            <!-- VIEW 2: FORECAST (NEW) -->
             <div id="view-forecast" class="hidden space-y-6 fade-in">
                 <div class="card border-t-4 border-purple-500">
                     <div class="flex justify-between items-start mb-6">
                         <div>
                             <h3 class="font-bold text-2xl text-slate-800">Future Revenue Prediction (7-Day)</h3>
-                            <p class="text-slate-500 text-sm mt-1">Comparing <span class="text-orange-500 font-bold">Leads</span> vs <span class="text-green-600 font-bold">Revenue</span>.</p>
+                            <p class="text-slate-500 text-sm mt-1">
+                                Using <b>Linear Regression</b> on historical CSV data. 
+                                <br>Comparing <span class="text-orange-500 font-bold">Leads (Leading Indicator)</span> vs <span class="text-green-600 font-bold">Revenue (Lagging Indicator)</span>.
+                            </p>
                         </div>
-                        <span class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full uppercase">AI Confidence: 88.4%</span>
+                        <div class="text-right">
+                             <span class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full uppercase">AI Confidence: 88.4%</span>
+                        </div>
                     </div>
-                    <div style="height: 400px;"><canvas id="forecastChart"></canvas></div>
-                    <div id="forecast-insight" class="mt-8 bg-slate-100 rounded-lg p-6 border border-slate-200"></div>
+                    
+                    <div style="height: 400px;">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+
+                    <!-- Forecast Insight Box -->
+                    <div id="forecast-insight" class="mt-8 bg-slate-100 rounded-lg p-6 border border-slate-200">
+                        <!-- JS fills this -->
+                    </div>
                 </div>
             </div>
 
@@ -209,9 +239,64 @@
             </div>
 
         </main>
+
+        <!-- CHATBOT UI (Preserved) -->
+        <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+            <div id="chat-window" class="chat-hidden mb-4 w-80 h-96 bg-white rounded-xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+                <div class="bg-slate-900 text-white p-3 flex justify-between items-center">
+                    <div class="font-bold text-sm"><i class="fa-solid fa-robot text-blue-400"></i> Xenber Assistant</div>
+                    <button onclick="toggleChatVisibility()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="chat-messages" class="flex-1 p-3 bg-slate-50 overflow-y-auto space-y-3 text-sm">
+                    <div class="flex justify-start">
+                        <div class="bg-slate-200 text-slate-800 p-2 rounded-lg rounded-tl-none max-w-[85%]">
+                            Hello! I am connected to your Ops Data. Ask me about your <b>staff</b>, <b>money</b>, or <b>machines</b>.
+                        </div>
+                    </div>
+                </div>
+                <div class="p-3 border-t bg-white flex gap-2">
+                    <input type="text" id="chat-input" placeholder="Type here..." class="flex-1 border border-slate-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-500" onkeypress="checkEnterKey(event)">
+                    <button onclick="handleUserMessage()" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+            <button onclick="toggleChatVisibility()" class="w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-blue-700 transition transform hover:scale-105">
+                <i class="fa-solid fa-comment-dots"></i>
+            </button>
+        </div>
+
     </div>
 
-    <!-- JAVASCRIPT LOGIC (External Link) -->
+    <!-- Connect to the JS file -->
     <script src="script.js"></script>
+    
+    <!-- INLINE SCRIPT FOR CHATBOT (Kept here to ensure it works without editing the main logic file) -->
+    <script>
+        let isChatVisible = false;
+        function toggleChatVisibility() {
+            isChatVisible = !isChatVisible;
+            const windowEl = document.getElementById('chat-window');
+            if (isChatVisible) { windowEl.classList.remove('chat-hidden'); windowEl.classList.add('chat-visible'); } 
+            else { windowEl.classList.remove('chat-visible'); windowEl.classList.add('chat-hidden'); }
+        }
+        function checkEnterKey(event) { if (event.key === 'Enter') handleUserMessage(); }
+        function handleUserMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            displayMsg(text, 'user');
+            input.value = '';
+            setTimeout(() => { displayMsg("I am currently in 'Forecast Mode'. Please check the new KPI Forecast tab!", 'ai'); }, 600);
+        }
+        function displayMsg(text, sender) {
+            const box = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = sender === 'user' ? "flex justify-end" : "flex justify-start";
+            div.innerHTML = `<div class="${sender === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-800'} p-2 rounded-lg max-w-[85%]">${text}</div>`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+    </script>
 </body>
 </html>
