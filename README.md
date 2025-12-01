@@ -33,4 +33,4 @@ Convert raw data to useful information (real-time data -> efficiency, reduce cos
 - Tan Swee Xin
 - Leow Zhen Xun
 - Chong Ming Zhe
-- Teoh Jun Hong
+- Jason
